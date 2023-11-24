@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>th, td {text-align: center;}</style>
+    <title>Leagues</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>{{collegeinfo[0]}}</h1>
+    <h2>Details</h2>
+    <ul>
+      <li>Contact: {{collegeinfo[1]}}</li>
+      <li>Discord: {{collegeinfo[2]}}</li>
+    </ul>
+    <h2>Teams</h2>
+    <table>
+      <tr>
+        <th>Team Name</th>
+        <th>League</th>
+        <th>Tier</th>
+      </tr>
+      {% for team in teams %}
+      <tr>
+        <td>{{team[0]}}</td>
+        <td>{{team[1]}}</td>
+        <td>{{team[2]}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

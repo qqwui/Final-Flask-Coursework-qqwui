@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Leagues</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Leagues</h1>
+    <ul>
+    {% for league in tabledata %}
+    <li><a href="/leagues?leagueid={{league[0]}}">{{league[1]}}</a></li>
+    {% endfor %}
+    </ul>
+  </body>
+</html>

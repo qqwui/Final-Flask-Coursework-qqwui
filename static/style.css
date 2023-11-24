@@ -1,0 +1,36 @@
+body {
+  font-family: sans-serif;
+}
+
+.error {
+  color: red;
+}
+
+.success {
+  color: green;
+}
+
+/* Nav Bar */
+li.nav {
+  float: left
+}
+
+nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #E7E7E7;
+}
+
+li.nav > * {
+  display: block;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: black;
+}
+
+li.nav a:hover {
+  background-color: #CCCCCC;
+}

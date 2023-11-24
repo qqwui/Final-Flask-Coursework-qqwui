@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Colleges</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Colleges</h1>
+    <ul>
+    {% for college in tabledata %}
+    <li><a href="/colleges?collegeid={{college[0]}}">{{college[1]}}</a></li>
+    {% endfor %}
+    </ul>
+  </body>
+</html>

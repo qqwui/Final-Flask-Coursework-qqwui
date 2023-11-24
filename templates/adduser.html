@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Home</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Create a student account</h1>
+    <p>All fields are required</p>
+    {% if error %}
+    <p style="color: red">ERROR: {{error}}</p>
+    {% endif %}
+    
+    {% if success %}
+    <p style="color: green">SUCCESS: Account created successfully</p>
+    {% endif %}
+    <form action="" method="post">
+      <table>
+        <tr>
+          <td>
+            <label for="usrname">Username:</label>
+          </td>
+          <td>
+            <input type="text" id="usrname" name="usrname">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="pass">Password:</label>
+          </td>
+          <td>
+            <input type="password" id="pass" name="pass">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="passconf">Confirm Password:</label>
+          </td>
+          <td>
+            <input type="password" id="passconf" name="passconf">
+          </td>
+        </tr>
+      </table>
+      <h2>Other details:</h2>
+      <table>
+        <tr>
+          <td>
+            <label for="name">Full Name:</label>
+          </td>
+          <td>
+            <input type="text" id="name" name="name">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="gtag">Gamer Tag:</label>
+          </td>
+          <td>
+            <input type="text" id="gtag" name="gtag">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="riotid">RiotID:</label>
+          </td>
+          <td>
+            <input type="text" id="riotid" name="riotid">
+          </td>
+        </tr>
+      </table>
+      <input type="submit" value="Submit">
+    </form>
+  </body>
+</html>

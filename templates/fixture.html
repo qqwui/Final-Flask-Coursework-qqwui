@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>th, td {text-align: center;}</style>
+    <title>Leagues</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>{{leaguename}}</h1>
+    <h2>Leaderboard</h2>
+    <table>
+      <tr>
+        <th>Placement</th>
+        <th>Team Name</th>
+        <th>Team Score</th>
+      </tr>
+      {% for team in leagueleaderboard %}
+      <tr>
+        <td>{{ leagueleaderboard.index(team) + 1 }}</td>
+        <td>{{team[0]}}</td>
+        <td>{{team[1]}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <h2>Fixtures</h2>
+    <table>
+      <tr>
+        <th>Teams</th>
+        <th>Date</th>
+        <th>Scores</th>
+      </tr>
+  </body>
+</html>

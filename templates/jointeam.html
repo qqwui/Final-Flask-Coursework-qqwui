@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Join Team</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Join a team</h1>
+    {% if success %}
+    <p style="color: green">SUCCESS: Team joined successfully</p>
+    {% endif %}
+    {% if error %}
+    <p style="color: red">ERROR: {{error}}</p>
+    {% endif %}
+    <form action="" method="post">
+      <label for="team">Team:</label>
+      <select name="teamid" id="team">
+        {% for team in tabledata %}
+        <option value="{{team[0]}}">{{team[1]}}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="usrname" value="{{username}}">
+      <input type="submit">
+    </form>
+  </body>
+</html>
