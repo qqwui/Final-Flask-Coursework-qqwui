@@ -162,4 +162,4 @@ cython_debug/
 # Project Specific ignores
 private/heel.db
 private/*.txt
-.DS_Store/*
+*/.DS_Store
