@@ -76,7 +76,7 @@ def verify_college(collid, collpass):
   return bcrypt.checkpw(collpass.encode("utf-8"), password)
 
 
-def verify_student(username, userpassword):
+def verify_player(username, userpassword):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   command = "SELECT Password FROM Players WHERE Username=?"
@@ -96,15 +96,6 @@ def get_team_names_scores(leagueid):
   con.close()
   return result
 
-def get_fixtures(leagueid):
-  con = sqlite3.connect(DB_PATH)
-  curs = con.cursor()
-  command = "SELECT TeamID from Teams WHERE LeagueID = ?"
-  teams = curs.execute(command, [leagueid]).fetchall()
-  
-  con.close()
-  return result
-
 def get_leaguename(leagueid): 
   # A lot of these get_x() functions have the same simple SELECT queries.
   # However, I cant make a general function like loaddata() as userdata is inputted into these functions
@@ -118,7 +109,7 @@ def get_college_teams(collegeid):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   # I think I'm going insane with INNER JOINS. At least I'm more confident with Paper 2 SQL.
-  command = "SELECT Teams.TeamName, Leagues.LeagueName, Leagues.LeagueTier FROM Teams INNER JOIN Leagues ON Teams.LeagueID = Leagues.LeagueID WHERE Teams.CollegeID=?"
+  command = "SELECT Teams.TeamName, Leagues.LeagueName FROM Teams INNER JOIN Leagues ON Teams.LeagueID = Leagues.LeagueID WHERE Teams.CollegeID=?"
   result = curs.execute(command, [collegeid]).fetchall()
   con.close()
   return result
@@ -130,6 +121,14 @@ def get_collegedetails(collegeid):
   con.close()
   return collegedetails
 
+def get_fixtures(leagueid):
+  con = sqlite3.connect(DB_PATH)
+  curs = con.cursor()
+  command = "SELECT Teams.TeamName, Fixtures.FixtureDate, FixtureLink.FixtureScore FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
+  result = curs.execute(command, [leagueid]).fetchall()
+  con.close()
+  return result
+
 ##########
 # Routes #
 ##########
@@ -139,7 +138,7 @@ def get_index():
   return flask.render_template("index.html")
 
 
-@app.route('/studentsignup', methods=['GET', 'POST'])
+@app.route('/playersignup', methods=['GET', 'POST'])
 def adduser():
   error = ""
   if flask.request.method == "POST":
@@ -185,7 +184,7 @@ def show_leagues():
     if not leaguename:
       return "<h1>400 Not a valid LeagueID</h1>", 400
     print(get_fixtures(flask.request.args.get("leagueid")))
-    return flask.render_template("fixture.html",leaguename=leaguename[0], leagueleaderboard=get_team_names_scores(flask.request.args.get("leagueid")))
+    return flask.render_template("fixture.html",leaguename=leaguename[0], leagueleaderboard=get_team_names_scores(flask.request.args.get("leagueid")), fixtures=get_fixtures(flask.request.args.get("leagueid")))
   else:
     return flask.render_template("leagues.html", tabledata=loaddata("Leagues", "LeagueID", "LeagueName"))
 
@@ -201,7 +200,7 @@ def college_login():
     if form_input.get("collid") and form_input.get("pass") and form_input.get("collid").isdigit():
       if verify_college(form_input.get("collid"), form_input.get("pass")):
         resp = flask.make_response(flask.redirect("/collegemanage"))
-        resp.set_cookie("collID", bytes(form_input.get("collid"), "utf8"))
+        resp.set_cookie("collID", form_input.get("collid"))
         return resp
       else:
         error = "CollegeID or Password not correct"
@@ -210,18 +209,25 @@ def college_login():
   print(error)
   return flask.render_template("collegelogin.html", error=error)
 
+@app.route("/collegesignout")
+def college_signout():
+  collid = flask.request.cookies.get('collID')
+  resp = flask.make_response(flask.redirect("/collegelogin"))
+  if collid:
+    resp.set_cookie("collID", "", expires=0)
+  return resp
 
-@app.route('/studentlogin', methods=['GET', 'POST'])
-def student_login():
+@app.route('/playerlogin', methods=['GET', 'POST'])
+def player_login():
   userid = flask.request.cookies.get('playerID')
   if userid:
-    return flask.redirect("/studentmanage")
+    return flask.redirect("/playermanage")
   error = ""
   if flask.request.method == "POST":
     form_input = flask.request.form
     if form_input.get("username") and form_input.get("pass"):
-      if verify_student(form_input.get("username"), form_input.get("pass")):
-        resp = flask.make_response(flask.redirect("/studentmanage"))
+      if verify_player(form_input.get("username"), form_input.get("pass")):
+        resp = flask.make_response(flask.redirect("/playermanage"))
         resp.set_cookie("playerID", bytes(form_input.get("username"), "utf8"))
         return resp
       else:
@@ -229,25 +235,32 @@ def student_login():
     else:
       error = "All fields must be filled in."
   print(error)
-  return flask.render_template("studentlogin.html", error=error)
+  return flask.render_template("playerlogin.html", error=error)
 
+@app.route("/playersignout")
+def player_signout():
+  collid = flask.request.cookies.get('playerID')
+  resp = flask.make_response(flask.redirect("/playerlogin"))
+  if collid:
+    resp.set_cookie("playerID", "", expires=0)
+  return resp
 
 @app.route("/collegemanage")
 def collegemanage():
   collid = flask.request.cookies.get('collID')
   if collid:
-    return flask.render_template("collegemanage.html")
+    return flask.render_template("collegemanage.html", college_name=get_collegedetails(collid)[0])
   else:
     return flask.redirect("/collegelogin")
 
 
-@app.route("/studentmanage")
-def studentmanage():
+@app.route("/playermanage")
+def playermanage():
   userid = flask.request.cookies.get('playerID')
   if userid:
-    return flask.render_template("studentmanage.html")
+    return flask.render_template("playermanage.html")
   else:
-    return flask.redirect("/studentlogin")
+    return flask.redirect("/playerlogin")
 
 
 @app.route("/createteam", methods=['GET', 'POST'])
@@ -281,7 +294,7 @@ def jointeam():
         error = "All fields must be filled in"
     return flask.render_template("jointeam.html", tabledata=loaddata("Teams", "TeamID", "TeamName"), error=error, username=userid)
   else:
-    return flask.redirect("/studentlogin")
+    return flask.redirect("/playerlogin")
 
 # i get these too much, so might as well make it entertaining
 @app.errorhandler(500)
@@ -293,6 +306,6 @@ def internal_crisis(e):
 # Main Loop #
 #############
 if __name__ == "__main__":
-  app.run(host='0.0.0.0', port=8080)
+  app.run(host='127.0.0.1', port=8080)
 
 # The End

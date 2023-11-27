@@ -30,5 +30,12 @@
         <th>Date</th>
         <th>Scores</th>
       </tr>
+      {% for fixture in fixtures %}
+      <tr>
+        <td>{{fixture[0]}}</td>
+        <td>{{fixture[1]}}</td>
+        <td>{{fixture[2]}}</td>
+      </tr>
+      {% endfor %}
   </body>
 </html>

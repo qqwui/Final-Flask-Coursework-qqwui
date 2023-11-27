@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Create Team</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Add Fixture Details</h1>
+    {% if success %}
+    <p style="color: green">SUCCESS: Details successfully</p>
+    {% endif %}
+    {% if error %}
+    <p style="color: red">ERROR: {{error}}</p>
+    {% endif %}
+    <form action="" method="post">
+      <table>
+        <tr>
+          <td><label for="teamname">Team Name:</label></td>
+          <td><input type="text" name="teamname" id="teamname"></td>
+        </tr>
+        <tr>
+          <td><label for="league">League:</label></td>
+          <td>
+            <select name="league" id="league">
+              {% for league in tabledata %}
+              <option value="{{league[0]}}">{{league[1] + ": " + league[2]}}</option>
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+      </table>
+      <input type="hidden" name="collid" value="{{collid}}">
+      <input type="submit">
+    </form>
+    
+  </body>
+</html>
