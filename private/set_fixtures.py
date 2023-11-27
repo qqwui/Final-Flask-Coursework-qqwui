@@ -3,7 +3,7 @@ import sqlite3
 import random
 from sys import argv
 
-DB_PATH = "/home/runner/Final-Flask-Coursework-qqwui/private/heel.db"
+DB_PATH = "heel.db"
 
 def get_teams(leagueid):
   con = sqlite3.connect(DB_PATH)

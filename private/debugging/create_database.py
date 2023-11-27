@@ -9,7 +9,7 @@ from os import path, remove
 # AND PUT THE PASSWORDS ON A SEPERATE FILE lmao no                                    #
 #######################################################################################
 
-DB_PATH = "/home/runner/Final-Flask-Coursework-qqwui/private/heel.db"
+DB_PATH = "../heel.db"
 
 def create_db():
   conn = sqlite3.connect(DB_PATH)

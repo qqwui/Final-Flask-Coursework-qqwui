@@ -3,7 +3,7 @@ import sqlite3
 from random import randint
 from sys import argv
 
-DB_PATH = "/home/runner/Final-Flask-Coursework-qqwui/private/heel.db"
+DB_PATH = "heel.db"
 
 if len(argv) > 1:
   Leaguename, Leagueyear, Leaguetier = argv[1:4]

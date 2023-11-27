@@ -2,7 +2,7 @@
 import sqlite3
 from sys import argv
 
-DB_PATH = "/home/runner/Final-Flask-Coursework-qqwui/private/heel.db"
+DB_PATH = "../heel.db"
 con = sqlite3.connect(DB_PATH)
 command = con.cursor()
 if len(argv) == 2:

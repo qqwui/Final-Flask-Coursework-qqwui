@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sqlite3
 
-DB_PATH = "/home/runner/Final-Flask-Coursework-qqwui/private/heel.db"
+DB_PATH = "heel.db"
 
 user_response = input("(D) to modify fixture dates or (S) to add fixture scores: ").upper()
 

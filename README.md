@@ -37,3 +37,10 @@ The directory structure looks like this:
 - main.py is the main backend and also webserver for the project. Ideally, a dedicated webserver such as Apache would be used in production but it would be too complex to implement here.
 
 Note that heel.db is created by create_database.py and is not source code. Don't try to open it in a text editor
+Scripts in private/ and debugging/ should be ran in their respective directory.
+
+## How to run
+- Install Flask and bcrypt python libraries
+- run create_database.py *in the debugging/ directory*
+- run main.py
+- the website should be accessible on 127.0.0.1:8080
