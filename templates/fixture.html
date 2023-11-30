@@ -27,13 +27,13 @@
     <table>
       <tr>
         <th>Teams</th>
-        <th>Date</th>
         <th>Scores</th>
+        <th>Date</th>
       </tr>
       {% for fixture in fixtures %}
       <tr>
-        <td>{{fixture[0]}}</td>
-        <td>{{fixture[1]}}</td>
+        <td>{{fixture[0][0] + " vs. " + fixture[1][0]}}</td>
+        <td>{{ fixture[0][1]|string + " - " + fixture[1][1]|string }}</td>
         <td>{{fixture[2]}}</td>
       </tr>
       {% endfor %}

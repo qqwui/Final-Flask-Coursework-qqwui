@@ -124,8 +124,15 @@ def get_collegedetails(collegeid):
 def get_fixtures(leagueid):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
-  command = "SELECT Teams.TeamName, Fixtures.FixtureDate, FixtureLink.FixtureScore FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
-  result = curs.execute(command, [leagueid]).fetchall()
+  result = []
+  # you have no idea how long it took me to think of the following
+  command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
+  fixtures = curs.execute(command, [leagueid]).fetchall()
+  for i in fixtures:
+    command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
+    teams = curs.execute(command, [i[0]]).fetchall()
+    result.append(teams + [i[1]])
+
   con.close()
   return result
 
