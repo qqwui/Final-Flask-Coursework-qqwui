@@ -64,6 +64,12 @@ def add_team_player(usrname, teamid):
   con.commit()
   con.close()
 
+def add_fixture_scores(fixtureid, teamid, score):
+  con = sqlite3.connect(DB_PATH)
+  command = con.cursor()
+  command.execute("UPDATE FixtureLink SET FixtureScore=? WHERE TeamID=? AND FixtureID=?", [score, teamid, fixtureid])
+  con.commit()
+  con.close()
 
 def verify_college(collid, collpass):
   con = sqlite3.connect(DB_PATH)
@@ -91,7 +97,7 @@ def get_team_names_scores(leagueid):
   curs = con.cursor()
   # INNER JOINS WOOOOOOOO!!!
   # DISTINCT is needed because Bye-ins are handled by having a team play twice. This causes the command to otherwise return that team twice.
-  command = "SELECT DISTINCT Teams.TeamName, FixtureLink.FixtureScore FROM FixtureLink INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID=? ORDER BY FixtureLink.FixtureScore ASC"
+  command = "SELECT DISTINCT Teams.TeamName, FixtureLink.FixtureScore FROM FixtureLink INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID=? ORDER BY FixtureLink.FixtureScore DESC"
   result = curs.execute(command, [leagueid]).fetchall()
   con.close()
   return result
@@ -132,6 +138,22 @@ def get_fixtures(leagueid):
     command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
     teams = curs.execute(command, [i[0]]).fetchall()
     result.append(teams + [i[1]])
+
+  return result
+
+def get_college_fixtures(collegeid):
+  con = sqlite3.connect(DB_PATH)
+  curs = con.cursor()
+  result = []
+  # you have no idea how long it took me to think of the following
+  command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.CollegeID = ?"
+  fixtures = curs.execute(command, [collegeid]).fetchall()
+  for i in fixtures:
+    command = "SELECT Teams.TeamName From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
+    teams = curs.execute(command, [i[0]]).fetchall()
+    command = "SELECT Teams.TeamID FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ? AND Teams.CollegeID = ?"
+    college_teamid = curs.execute(command, [i[0], collegeid]).fetchone()
+    result.append(teams + [i[0], college_teamid[0]])
 
   con.close()
   return result
@@ -260,7 +282,6 @@ def collegemanage():
   else:
     return flask.redirect("/collegelogin")
 
-
 @app.route("/playermanage")
 def playermanage():
   userid = flask.request.cookies.get('playerID')
@@ -302,6 +323,27 @@ def jointeam():
     return flask.render_template("jointeam.html", tabledata=loaddata("Teams", "TeamID", "TeamName"), error=error, username=userid)
   else:
     return flask.redirect("/playerlogin")
+  
+@app.route("/fixturemanage", methods=['GET', 'POST'])
+def fixturemanage():
+  collid = flask.request.cookies.get('collID')
+  if collid:
+    print(get_college_fixtures(collid))
+    error=""
+    if flask.request.method == "POST":
+      form_input = flask.request.form
+      if form_input.get('score') and form_input.get("fixture"):
+        try:
+          score = int(form_input.get('score'))
+          fixtureid, teamid = form_input.get("fixture").split(" ")
+          add_fixture_scores(fixtureid, teamid, score)
+        except ValueError:
+          error = "Score must be a number"
+      else:
+        error = "All fields must be filled in"
+    return flask.render_template("fixturemanage.html", tabledata=get_college_fixtures(collid), error=error)
+  else:
+    return flask.redirect("/collegelogin")
 
 # i get these too much, so might as well make it entertaining
 @app.errorhandler(500)
