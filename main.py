@@ -132,12 +132,12 @@ def get_fixtures(leagueid):
   curs = con.cursor()
   result = []
   # you have no idea how long it took me to think of the following
-  command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
+  command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate, Fixtures.FixtureStreamLink FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
   fixtures = curs.execute(command, [leagueid]).fetchall()
   for i in fixtures:
     command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
     teams = curs.execute(command, [i[0]]).fetchall()
-    result.append(teams + [i[1]])
+    result.append(teams + [i[1], i[2]])
 
   return result
 
@@ -256,7 +256,7 @@ def player_login():
     if form_input.get("username") and form_input.get("pass"):
       if verify_player(form_input.get("username"), form_input.get("pass")):
         resp = flask.make_response(flask.redirect("/playermanage"))
-        resp.set_cookie("playerID", bytes(form_input.get("username"), "utf8"))
+        resp.set_cookie("playerID", form_input.get("username"))
         return resp
       else:
         error = "Username or Password not correct"

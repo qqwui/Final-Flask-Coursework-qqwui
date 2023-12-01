@@ -28,6 +28,7 @@
       <tr>
         <th>Teams</th>
         <th>Scores</th>
+        <th>Stream Link</th>
         <th>Date</th>
       </tr>
       {% for fixture in fixtures %}
@@ -35,6 +36,7 @@
         <td>{{fixture[0][0] + " vs. " + fixture[1][0]}}</td>
         <td>{{ fixture[0][1]|string + " - " + fixture[1][1]|string }}</td>
         <td>{{fixture[2] or "Not Announced"}}</td>
+        <td>{{fixture[3]}}</td>
       </tr>
       {% endfor %}
   </body>

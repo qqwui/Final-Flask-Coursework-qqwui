@@ -29,7 +29,6 @@ def create_db():
 	"LeagueID"	TEXT,
 	"LeagueName"	TEXT,
 	"LeagueYearCreated"	TEXT,
-	"LeagueTier"	TEXT,
 	PRIMARY KEY("LeagueID")
   )
   """)
@@ -37,6 +36,7 @@ def create_db():
   CREATE TABLE "Fixtures" (
 	"FixtureID"	TEXT,
 	"FixtureDate"	TEXT,
+  "FixtureStreamLink" TEXT,
 	PRIMARY KEY("FixtureID")
   )
   """)

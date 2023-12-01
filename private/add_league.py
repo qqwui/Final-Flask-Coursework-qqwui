@@ -5,20 +5,19 @@ from sys import argv
 
 DB_PATH = "heel.db"
 
-if len(argv) > 1:
-  Leaguename, Leagueyear, Leaguetier = argv[1:4]
+if len(argv) == 3:
+  Leaguename, Leagueyear = argv[1:3]
 else:
   Leaguename = input("Enter League name: ")
   Leagueyear = input("Enter League Year: ")
-  Leaguetier = input("Enter League Tier: ")
 
 conn = sqlite3.connect(DB_PATH)
 command = conn.cursor()
 
 Leagueid = str(randint(1, 99999)).zfill(5)  # I hope there are no clashes
 
-adddetails = "INSERT INTO Leagues (LeagueID, LeagueName, LeagueYearCreated, LeagueTier) VALUES (?,?,?,?)"
-print([Leagueid, Leaguename, Leagueyear, Leaguetier])
-command.execute(adddetails, [Leagueid, Leaguename, Leagueyear, Leaguetier])
+adddetails = "INSERT INTO Leagues (LeagueID, LeagueName, LeagueYearCreated) VALUES (?,?,?)"
+print([Leagueid, Leaguename, Leagueyear])
+command.execute(adddetails, [Leagueid, Leaguename, Leagueyear])
 conn.commit()
 conn.close()
