@@ -42,8 +42,9 @@ if len(argv) >= 3:
   teamsinleague = get_teams(leagueid)
   # i'm using the pop function which acts on the array itself, so i save a copy to preserve the original
   teamstopair = teamsinleague.copy()
+  # TODO: Sometimes it pairs the same teams twice, idk why, something to do with random seeds?
   random.shuffle(teamstopair)
-  
+
   fixtures = []
   
   while not len(teamstopair) <= 1:

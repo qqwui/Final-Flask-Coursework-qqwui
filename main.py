@@ -212,7 +212,6 @@ def show_leagues():
     leaguename = get_leaguename(flask.request.args.get("leagueid"))
     if not leaguename:
       return "<h1>400 Not a valid LeagueID</h1>", 400
-    print(get_fixtures(flask.request.args.get("leagueid")))
     return flask.render_template("fixture.html",leaguename=leaguename[0], leagueleaderboard=get_team_names_scores(flask.request.args.get("leagueid")), fixtures=get_fixtures(flask.request.args.get("leagueid")))
   else:
     return flask.render_template("leagues.html", tabledata=loaddata("Leagues", "LeagueID", "LeagueName"))
@@ -328,7 +327,6 @@ def jointeam():
 def fixturemanage():
   collid = flask.request.cookies.get('collID')
   if collid:
-    print(get_college_fixtures(collid))
     error=""
     if flask.request.method == "POST":
       form_input = flask.request.form
