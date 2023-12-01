@@ -26,18 +26,8 @@ def add_fixtures(fixtures):
   con.commit()
   con.close()
 
-def create_fixtures_sheet(fixtures, filename):
-  towrite = ""
-  for i in fixtures:
-    towrite += "{0} ({1}) vs. {2} ({3})\n".format(i[0][1], i[0][0], i[1][1], i[1][0])
-    # towrite += i[0][1] + " (" + i[0][0] + ") vs. " + i[1][1] + " (" + i[1][0] + ")\n"
-  file = open(filename, "w")
-  file.write(towrite)
-  file.close()
-
-if len(argv) >= 3:
+if len(argv) >= 2:
   leagueid = argv[1]
-  fixuresheet = argv[2]
   
   teamsinleague = get_teams(leagueid)
   # i'm using the pop function which acts on the array itself, so i save a copy to preserve the original
@@ -63,6 +53,5 @@ if len(argv) >= 3:
 
   print(fixtures)
   add_fixtures(fixtures)
-  create_fixtures_sheet(fixtures, argv[2])
 else:
-  print(argv[0], "leagueid", "sheet_file_name")
+  print(argv[0], "leagueid")

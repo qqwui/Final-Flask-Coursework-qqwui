@@ -34,7 +34,7 @@
       <tr>
         <td>{{fixture[0][0] + " vs. " + fixture[1][0]}}</td>
         <td>{{ fixture[0][1]|string + " - " + fixture[1][1]|string }}</td>
-        <td>{{fixture[2]}}</td>
+        <td>{{fixture[2] or "Not Announced"}}</td>
       </tr>
       {% endfor %}
   </body>
