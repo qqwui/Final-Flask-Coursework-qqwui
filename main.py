@@ -96,10 +96,15 @@ def get_team_names_scores(leagueid):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   # INNER JOINS WOOOOOOOO!!!
-  # DISTINCT is needed because Bye-ins are handled by having a team play twice. This causes the command to otherwise return that team twice.
-  command = "SELECT DISTINCT Teams.TeamName, FixtureLink.FixtureScore FROM FixtureLink INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID=? ORDER BY FixtureLink.FixtureScore DESC"
-  result = curs.execute(command, [leagueid]).fetchall()
+  command = "SELECT Teams.TeamName, FixtureLink.FixtureScore FROM FixtureLink INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID=?"
+  teamscores = curs.execute(command, [leagueid]).fetchall()
   con.close()
+  teams = set(x[0] for x in teamscores)
+  result = []
+  for i in teams:
+    totalscore = sum([x[1] for x in teamscores if x[0] == i])
+    result.append((i, totalscore))
+  result.sort(key=lambda a: a[1], reverse=True)
   return result
 
 def get_leaguename(leagueid): 
