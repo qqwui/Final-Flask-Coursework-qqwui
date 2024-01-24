@@ -99,12 +99,14 @@ def get_team_names_scores(leagueid):
   command = "SELECT Teams.TeamName, FixtureLink.FixtureScore FROM FixtureLink INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID=?"
   teamscores = curs.execute(command, [leagueid]).fetchall()
   con.close()
-  teams = set(x[0] for x in teamscores)
+
+  teams = set(x[0] for x in teamscores) # get unique teams
   result = []
-  for i in teams:
-    totalscore = sum([x[1] for x in teamscores if x[0] == i])
-    result.append((i, totalscore))
+  for team in teams:
+    totalscore = sum([fixture[1] for fixture in teamscores if fixture[0] == team])
+    result.append((team, totalscore))
   result.sort(key=lambda a: a[1], reverse=True)
+  
   return result
 
 def get_leaguename(leagueid): 
@@ -199,7 +201,7 @@ def adduser():
 
 @app.route("/colleges")
 def show_colleges():
-  # TODO EXTRAS: display teams
+  # DONE EXTRAS: display teams
   if flask.request.args.get("collegeid"):
     details = get_collegedetails(flask.request.args.get("collegeid"))
     if not details:
@@ -213,7 +215,7 @@ def show_colleges():
 @app.route("/leagues")
 def show_leagues():
   if flask.request.args.get("leagueid"): # so apparently request.form is only for POST method
-    # TODO: Add list of fixtures, the participating team, the date, EXTRAS: has it happened yet (see if scores are placed yet)
+    # DONE: Add list of fixtures, the participating team, the date, EXTRAS: has it happened yet (see if scores are placed yet)
     leaguename = get_leaguename(flask.request.args.get("leagueid"))
     if not leaguename:
       return "<h1>400 Not a valid LeagueID</h1>", 400
