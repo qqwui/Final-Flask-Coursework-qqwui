@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>th, td {text-align: center;}</style>
+    <title>Player Dashboard</title>
+  </head>
+  <body>
+    {% include "nav.html" %}
+    <h1>Welcome Player</h1>
+    <h2>Upcoming Fixtures</h2>
+    <table>
+      <tr>
+        <th>Teams</th>
+        <th>Date</th>
+        <th>Stream Link</th>
+      </tr>
+      {% for fixture in fixtures %}
+      <tr>
+        <td>{{fixture[0][0] + " vs. " + fixture[1][0]}}</td>
+        <td>{{fixture[2] or "Not Announced"}}</td>
+        <td>{{fixture[3]}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

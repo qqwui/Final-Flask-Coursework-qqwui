@@ -33,7 +33,9 @@ def insert_player(username, password, playername, gamertag, riotid):
   con = sqlite3.connect(DB_PATH)
   command = con.cursor()
 
-  usernames = [ item[0] for item in command.execute("SELECT Username FROM Players").fetchall() ]  # the command returns an array of tuples, which is unhelpful here as each tuple has one element
+  # the command returns an array of tuples, which is unhelpful here as each tuple has one element
+  # the list comprehension just gets each element from the tuples
+  usernames = [ item[0] for item in command.execute("SELECT Username FROM Players").fetchall() ]
   if username in usernames:
     con.close()
     return False
@@ -152,7 +154,7 @@ def get_college_fixtures(collegeid):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   result = []
-  # you have no idea how long it took me to think of the following
+  # there are many FixtureLinks to one Fixture, so DISTINCT is used so i dont get duplicate entries
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.CollegeID = ?"
   fixtures = curs.execute(command, [collegeid]).fetchall()
   for i in fixtures:
@@ -161,6 +163,31 @@ def get_college_fixtures(collegeid):
     command = "SELECT Teams.TeamID FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ? AND Teams.CollegeID = ?"
     college_teamid = curs.execute(command, [i[0], collegeid]).fetchone()
     result.append(teams + [i[0], college_teamid[0]])
+
+  con.close()
+  return result
+
+def get_player_team(username):
+  con = sqlite3.connect(DB_PATH)
+  curs = con.cursor()
+  # again, returns a single tuple with only one elements, which messes up get_upcoming_team_fixtures()
+  team = curs.execute("SELECT Teams.TeamID FROM PlayerLink INNER JOIN Teams ON PlayerLink.TeamID = Teams.TeamID WHERE PlayerLink.Username = ?", [username]).fetchone()
+  con.close()
+  # team[0]: get the first and only element, needs to make sure team exists before i can use subscript to get the first element
+  return team[0] if team else False
+
+def get_upcoming_team_fixtures(teamid):
+  con = sqlite3.connect(DB_PATH)
+  curs = con.cursor()
+  result = []
+  # Fixtures.FixtureDate >= strftime('%F'): fixture dates are stored in YYYY-MM-DD form i.e. ISO 8601, strftime('%F') gives the current date in YYYY-MM-DD form so it can be compared
+  # Fixtures.FixtureDate IS NULL: or the fixture date is empty i.e. date not settled yet, ideally in the future
+  command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID WHERE (Fixtures.FixtureDate >= strftime('%F') OR Fixtures.FixtureDate IS NULL) AND FixtureLink.TeamID = ?"
+  fixtures = curs.execute(command, [teamid]).fetchall()
+  for fixture in fixtures:
+    command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
+    teams = curs.execute(command, [fixture[0]]).fetchall()
+    result.append(teams + [fixture[1]])
 
   con.close()
   return result
@@ -256,13 +283,13 @@ def college_signout():
 def player_login():
   userid = flask.request.cookies.get('playerID')
   if userid:
-    return flask.redirect("/playermanage")
+    return flask.redirect("/playerdashboard")
   error = ""
   if flask.request.method == "POST":
     form_input = flask.request.form
     if form_input.get("username") and form_input.get("pass"):
       if verify_player(form_input.get("username"), form_input.get("pass")):
-        resp = flask.make_response(flask.redirect("/playermanage"))
+        resp = flask.make_response(flask.redirect("/playerdashboard"))
         resp.set_cookie("playerID", form_input.get("username"))
         return resp
       else:
@@ -288,11 +315,15 @@ def collegemanage():
   else:
     return flask.redirect("/collegelogin")
 
-@app.route("/playermanage")
+@app.route("/playerdashboard")
 def playermanage():
   userid = flask.request.cookies.get('playerID')
   if userid:
-    return flask.render_template("playermanage.html")
+    teamid = get_player_team(userid)
+    if teamid:
+      return flask.render_template("playerdashboard.html", fixtures=get_upcoming_team_fixtures(teamid))
+    else:
+      return flask.render_template("playermanage.html")
   else:
     return flask.redirect("/playerlogin")
 
@@ -319,11 +350,13 @@ def jointeam():
   userid = flask.request.cookies.get('playerID')
   if userid:
     error = ""
+    if get_player_team(userid):
+      return flask.redirect("/playerdashboard")
     if flask.request.method == "POST":
       form_input = flask.request.form
       if form_input.get('usrname') and form_input.get('teamid'):
         add_team_player(form_input.get('usrname'), form_input.get('teamid'))
-        return flask.render_template("jointeam.html", tabledata=loaddata("Teams", "TeamID", "TeamName"), success=True, username=userid)
+        return flask.redirect("/playerdashboard")
       else:
         error = "All fields must be filled in"
     return flask.render_template("jointeam.html", tabledata=loaddata("Teams", "TeamID", "TeamName"), error=error, username=userid)
