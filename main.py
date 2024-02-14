@@ -143,10 +143,10 @@ def get_fixtures(leagueid):
   # you have no idea how long it took me to think of the following
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate, Fixtures.FixtureStreamLink FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
   fixtures = curs.execute(command, [leagueid]).fetchall()
-  for i in fixtures:
+  for fixture in fixtures:
     command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
-    teams = curs.execute(command, [i[0]]).fetchall()
-    result.append(teams + [i[1], i[2]])
+    teams = curs.execute(command, [fixture[0]]).fetchall()
+    result.append(teams + [fixture[1], fixture[2]])
 
   return result
 
@@ -157,12 +157,12 @@ def get_college_fixtures(collegeid):
   # there are many FixtureLinks to one Fixture, so DISTINCT is used so i dont get duplicate entries
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.CollegeID = ?"
   fixtures = curs.execute(command, [collegeid]).fetchall()
-  for i in fixtures:
+  for fixture in fixtures:
     command = "SELECT Teams.TeamName From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
-    teams = curs.execute(command, [i[0]]).fetchall()
+    teams = curs.execute(command, [fixture[0]]).fetchall()
     command = "SELECT Teams.TeamID FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ? AND Teams.CollegeID = ?"
-    college_teamid = curs.execute(command, [i[0], collegeid]).fetchone()
-    result.append(teams + [i[0], college_teamid[0]])
+    college_teamid = curs.execute(command, [fixture[0], collegeid]).fetchone()
+    result.append(teams + [fixture[0], college_teamid[0]])
 
   con.close()
   return result
@@ -215,7 +215,9 @@ def adduser():
         if insert_player(form_input.get('usrname'), form_input.get('pass'),
                          form_input.get('name'), form_input.get('gtag'),
                          form_input.get('riotid')): 
-          return flask.render_template('adduser.html', success=True)
+          resp = flask.make_response(flask.redirect("/playerdashboard"))
+          resp.set_cookie("playerID", form_input.get("username"))
+          return resp
         else:
           error = "Username is taken"
       else:
