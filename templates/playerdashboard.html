@@ -13,13 +13,11 @@
       <tr>
         <th>Teams</th>
         <th>Date</th>
-        <th>Stream Link</th>
       </tr>
       {% for fixture in fixtures %}
       <tr>
         <td>{{fixture[0][0] + " vs. " + fixture[1][0]}}</td>
         <td>{{fixture[2] or "Not Announced"}}</td>
-        <td>{{fixture[3]}}</td>
       </tr>
       {% endfor %}
     </table>

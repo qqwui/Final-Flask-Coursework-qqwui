@@ -33,10 +33,8 @@ def insert_player(username, password, playername, gamertag, riotid):
   con = sqlite3.connect(DB_PATH)
   command = con.cursor()
 
-  # the command returns an array of tuples, which is unhelpful here as each tuple has one element
-  # the list comprehension just gets each element from the tuples
-  usernames = [ item[0] for item in command.execute("SELECT Username FROM Players").fetchall() ]
-  if username in usernames:
+  # if the username is taken, the statement will evalutate to true as all values not Null are truthy
+  if not command.execute("SELECT Username FROM Players WHERE Username = ?", [username]).fetchone():
     con.close()
     return False
 
@@ -53,6 +51,7 @@ def insert_player(username, password, playername, gamertag, riotid):
 def insert_team(collid, leagueid, teamname):
   con = sqlite3.connect(DB_PATH)
   command = con.cursor()
+  # Ideally there would be some code to check if the resulting string is already taken, but I'll take a gamble
   teamid = str(random.randint(1, 99999)).zfill(5)
   command.execute("INSERT INTO Teams (TeamID, CollegeID, LeagueID, TeamName) VALUES (?,?,?,?)", [teamid, collid, leagueid, teamname])
   con.commit()
@@ -141,20 +140,25 @@ def get_fixtures(leagueid):
   curs = con.cursor()
   result = []
   # you have no idea how long it took me to think of the following
+  # The first statement gets each fixture whose FixtureLinks have TeamIDs that are in the league
+  # DISTINCT: there are many FixtureLinks to one Fixture, so this will return multiple fixtures
+  # the DISTINCT gets rid of results with duplicate FixtureIDs
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate, Fixtures.FixtureStreamLink FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.LeagueID = ?"
   fixtures = curs.execute(command, [leagueid]).fetchall()
+  # Now, loop through each Fixture to find the FixtureLinks associated with it
   for fixture in fixtures:
     command = "SELECT Teams.TeamName, FixtureLink.FixtureScore From Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Fixtures.FixtureID = ?"
     teams = curs.execute(command, [fixture[0]]).fetchall()
+    # Package them all into one neat list using some ungodly concatenation
     result.append(teams + [fixture[1], fixture[2]])
 
   return result
 
 def get_college_fixtures(collegeid):
+  # Most of the get_x() functions relating to fixtures will have the same format, its the best solution I can think of
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   result = []
-  # there are many FixtureLinks to one Fixture, so DISTINCT is used so i dont get duplicate entries
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID INNER JOIN Teams ON FixtureLink.TeamID = Teams.TeamID WHERE Teams.CollegeID = ?"
   fixtures = curs.execute(command, [collegeid]).fetchall()
   for fixture in fixtures:
@@ -170,7 +174,7 @@ def get_college_fixtures(collegeid):
 def get_player_team(username):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
-  # again, returns a single tuple with only one elements, which messes up get_upcoming_team_fixtures()
+  # again, .fetchone() returns a single tuple with only one element, which messes up get_upcoming_team_fixtures()
   team = curs.execute("SELECT Teams.TeamID FROM PlayerLink INNER JOIN Teams ON PlayerLink.TeamID = Teams.TeamID WHERE PlayerLink.Username = ?", [username]).fetchone()
   con.close()
   # team[0]: get the first and only element, needs to make sure team exists before i can use subscript to get the first element
@@ -181,7 +185,9 @@ def get_upcoming_team_fixtures(teamid):
   curs = con.cursor()
   result = []
   # Fixtures.FixtureDate >= strftime('%F'): fixture dates are stored in YYYY-MM-DD form i.e. ISO 8601, strftime('%F') gives the current date in YYYY-MM-DD form so it can be compared
+  # Its kinda cool this can be done despite sqlite storing dates as strings
   # Fixtures.FixtureDate IS NULL: or the fixture date is empty i.e. date not settled yet, ideally in the future
+  # Also, I just learnt that you can put brackets around WHERE statements to have them evaluated first
   command = "SELECT DISTINCT Fixtures.FixtureID, Fixtures.FixtureDate FROM Fixtures INNER JOIN FixtureLink ON Fixtures.FixtureID = FixtureLink.FixtureID WHERE (Fixtures.FixtureDate >= strftime('%F') OR Fixtures.FixtureDate IS NULL) AND FixtureLink.TeamID = ?"
   fixtures = curs.execute(command, [teamid]).fetchall()
   for fixture in fixtures:
@@ -211,7 +217,7 @@ def adduser():
         and form_input.get('passconf') and form_input.get('name')
         and form_input.get('gtag') and form_input.get('riotid')):
       if (form_input["pass"] == form_input["passconf"]):
-        # this is pretty cluttered but the old version was hard to understand
+        # this is pretty cluttered but the old version was hard to see what arguments it needed
         if insert_player(form_input.get('usrname'), form_input.get('pass'),
                          form_input.get('name'), form_input.get('gtag'),
                          form_input.get('riotid')): 
@@ -224,17 +230,19 @@ def adduser():
         error = "Passwords do not match"
     else:
       error = "All fields must be filled in"
-  print(error)
   return flask.render_template('adduser.html', error=error)
 
 
 @app.route("/colleges")
 def show_colleges():
-  # DONE EXTRAS: display teams
+  # if flask.request.args.get("collegeid"): display college details if we have the collegeid in the url, otherwise, display a list of colleges
   if flask.request.args.get("collegeid"):
     details = get_collegedetails(flask.request.args.get("collegeid"))
+    # failsafe in case invalid leagueid is used
     if not details:
-       return "<h1>400 Not a valid CollegeID</h1>", 400
+      # if you add a number to the end of a return for an app route, it will use that number as the http status code
+      # 400 is just a generic "you didnt format your request correctly", which i guess is technically true
+      return "<h1>400 Not a valid CollegeID</h1>", 400
 
     return flask.render_template("teams.html", collegeinfo=details, teams=get_college_teams(flask.request.args.get("collegeid")))
   else:
@@ -244,7 +252,6 @@ def show_colleges():
 @app.route("/leagues")
 def show_leagues():
   if flask.request.args.get("leagueid"): # so apparently request.form is only for POST method
-    # DONE: Add list of fixtures, the participating team, the date, EXTRAS: has it happened yet (see if scores are placed yet)
     leaguename = get_leaguename(flask.request.args.get("leagueid"))
     if not leaguename:
       return "<h1>400 Not a valid LeagueID</h1>", 400
@@ -255,6 +262,7 @@ def show_leagues():
 
 @app.route('/collegelogin', methods=['GET', 'POST'])
 def college_login():
+  # http cookies are cool, i dont have to use javascript to access them
   collid = flask.request.cookies.get('collID')
   if collid:
     return flask.redirect("/collegemanage")
@@ -263,6 +271,7 @@ def college_login():
     form_input = flask.request.form
     if form_input.get("collid") and form_input.get("pass") and form_input.get("collid").isdigit():
       if verify_college(form_input.get("collid"), form_input.get("pass")):
+        # the day i learnt you could set cookies and redirect at the same time saved so much code
         resp = flask.make_response(flask.redirect("/collegemanage"))
         resp.set_cookie("collID", form_input.get("collid"))
         return resp
@@ -270,15 +279,15 @@ def college_login():
         error = "CollegeID or Password not correct"
     else:
       error = "All fields must be filled in. CollegeID must be a number."
-  print(error)
+
   return flask.render_template("collegelogin.html", error=error)
 
-@app.route("/collegesignout")
-def college_signout():
-  collid = flask.request.cookies.get('collID')
-  resp = flask.make_response(flask.redirect("/collegelogin"))
-  if collid:
-    resp.set_cookie("collID", "", expires=0)
+@app.route("/signout")
+def signout():
+  # the code is about the same for both colleges and players, so might as well kill two birds with one stone
+  resp = flask.make_response(flask.redirect("/index.html"))
+  resp.set_cookie("collID", "", expires=0) # this just sets the cookie data to null and the expire date to 1970-01-01, hopefully in the past
+  resp.set_cookie("playerID", "", expires=0)
   return resp
 
 @app.route('/playerlogin', methods=['GET', 'POST'])
@@ -298,21 +307,13 @@ def player_login():
         error = "Username or Password not correct"
     else:
       error = "All fields must be filled in."
-  print(error)
   return flask.render_template("playerlogin.html", error=error)
-
-@app.route("/playersignout")
-def player_signout():
-  collid = flask.request.cookies.get('playerID')
-  resp = flask.make_response(flask.redirect("/playerlogin"))
-  if collid:
-    resp.set_cookie("playerID", "", expires=0)
-  return resp
 
 @app.route("/collegemanage")
 def collegemanage():
   collid = flask.request.cookies.get('collID')
   if collid:
+    # get_collegedetails(collid)[0]: pretty cool trick i thought of to just get the name of the college without creating a whole new function
     return flask.render_template("collegemanage.html", college_name=get_collegedetails(collid)[0])
   else:
     return flask.redirect("/collegelogin")
@@ -373,6 +374,7 @@ def fixturemanage():
     if flask.request.method == "POST":
       form_input = flask.request.form
       if form_input.get('score') and form_input.get("fixture"):
+        # I DID IT. I PUT A TRY EXCEPT CLAUSE IN THE CODE, ARE YOU HAPPY NOW?
         try:
           score = int(form_input.get('score'))
           fixtureid, teamid = form_input.get("fixture").split(" ")
