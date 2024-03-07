@@ -31,6 +31,8 @@ if len(argv) >= 2:
   
   teamsinleague = get_teams(leagueid)
   # i'm using the pop function which acts on the array itself, so i save a copy to preserve the original
+  # for some stupid reason, when i do teamstopair = teamsinleague, python decides it'll treat teamstopair as a pointer, which defeats the point of me doing that
+  # .copy() only works for lists, but we roll with it
   teamstopair = teamsinleague.copy()
   # TODO: Sometimes it pairs the same teams twice, idk why, something to do with random seeds?
   random.shuffle(teamstopair)

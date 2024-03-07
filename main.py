@@ -76,22 +76,23 @@ def verify_college(collid, collpass):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   command = "SELECT CollegePassword FROM Colleges WHERE CollegeID=?"
-  password = curs.execute(command, [collid]).fetchone()[0]
+  password = curs.execute(command, [collid]).fetchone()
   con.close()
+  # if the password is not filled, the collegeid doesnt exist
   if not password:
     return False
-  return bcrypt.checkpw(collpass.encode("utf-8"), password)
+  return bcrypt.checkpw(collpass.encode("utf-8"), password[0])
 
 
 def verify_player(username, userpassword):
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   command = "SELECT Password FROM Players WHERE Username=?"
-  password = curs.execute(command, [username]).fetchone()[0]
+  password = curs.execute(command, [username]).fetchone()
   con.close()
   if not password:
     return False
-  return bcrypt.checkpw(userpassword.encode("utf-8"), password)
+  return bcrypt.checkpw(userpassword.encode("utf-8"), password[0])
 
 def get_team_names_scores(leagueid):
   con = sqlite3.connect(DB_PATH)
@@ -155,7 +156,7 @@ def get_fixtures(leagueid):
   return result
 
 def get_college_fixtures(collegeid):
-  # Most of the get_x() functions relating to fixtures will have the same format, its the best solution I can think of
+  # Most of the get_x_fixtures() functions will have the same format, its the best solution I can think of
   con = sqlite3.connect(DB_PATH)
   curs = con.cursor()
   result = []
