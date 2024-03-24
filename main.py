@@ -34,7 +34,7 @@ def insert_player(username, password, playername, gamertag, riotid):
   command = con.cursor()
 
   # if the username is taken, the statement will evalutate to true as all values not Null are truthy
-  if not command.execute("SELECT Username FROM Players WHERE Username = ?", [username]).fetchone():
+  if command.execute("SELECT Username FROM Players WHERE Username = ?", [username]).fetchone():
     con.close()
     return False
 
@@ -223,7 +223,7 @@ def adduser():
                          form_input.get('name'), form_input.get('gtag'),
                          form_input.get('riotid')): 
           resp = flask.make_response(flask.redirect("/playerdashboard"))
-          resp.set_cookie("playerID", form_input.get("username"))
+          resp.set_cookie("playerID", form_input.get("usrname"))
           return resp
         else:
           error = "Username is taken"
